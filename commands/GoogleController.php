@@ -83,9 +83,9 @@ class GoogleController extends Controller
         while($fileList!=[]) {
             foreach ($fileList as $file) {
                 pclose(popen("\"C:\Program Files (x86)\sox-14-4-2\sox.exe\"  ../uploads/mp3/{$file['hash']}.mp3 -V1 ../uploads/wav/{$file['hash']}.wav rate 16k channels 1 &", "r"));
-                //$this->getTranscript("{$file['hash']}.wav", $file['id']);
-                $this->updateHash($file['id'], "123", "succes");
-                //unlink("../uploads/mp3/{$file['hash']}.mp3");
+                $this->getTranscript("{$file['hash']}.wav", $file['id']);
+
+                unlink("../uploads/mp3/{$file['hash']}.mp3");
                 unlink("../uploads/wav/{$file['hash']}.wav");
             }
             $fileList = $this->selectFile();
