@@ -1,0 +1,10 @@
+<IfModule dir_module>
+    DirectoryIndex index.php
+    Header set Access-Control-Allow-Origin "*"
+</IfModule>
+RewriteEngine On RewriteBase /
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+RewriteRule . index.php
