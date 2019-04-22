@@ -45,7 +45,7 @@ class GoogleController extends Controller
 
     public function getTranscript($fileName ,$fileId){
         $this->updateHash($fileId, "", "processing");
-        $audioFile = "../uploads/wav/" . $fileName;
+        $audioFile = __DIR__."/../uploads/wav/" . $fileName;
         # get contents of a file into a string
         $content = file_get_contents($audioFile);
         # set string as audio content
@@ -74,19 +74,19 @@ class GoogleController extends Controller
     }
     public function actionIndex()
     {
-    //    putenv("GOOGLE_APPLICATION_CREDENTIALS=C:\Users\a.iodkovskii\Downloads\Open Server 5.2.9\OSPanel\domains\gspeech\zippy-acronym-237307-15dd4d1ee5f9.json");
+        putenv("GOOGLE_APPLICATION_CREDENTIALS=/var/www/zippy-acronym-237307-15dd4d1ee5f9.json");
         $pid = getmypid();
-        $file = fopen("../commands/pid.txt","w");
+        $file = fopen(__DIR__ . "/pid.txt","w");
         fwrite($file, $pid);
         fclose($file);
         $fileList = $this->selectFile();
         while($fileList!=[]) {
             foreach ($fileList as $file) {
-                pclose(popen("\"C:\Program Files (x86)\sox-14-4-2\sox.exe\"  ../uploads/mp3/{$file['hash']}.mp3 -V1 ../uploads/wav/{$file['hash']}.wav rate 16k channels 1 &", "r"));
+                pclose(popen("sox ".__DIR__."/../uploads/mp3/{$file['hash']}.mp3 -V1 ".__DIR__."/../uploads/wav/{$file['hash']}.wav rate 16k channels 1 &", "r"));
                 $this->getTranscript("{$file['hash']}.wav", $file['id']);
 
-                unlink("../uploads/mp3/{$file['hash']}.mp3");
-                unlink("../uploads/wav/{$file['hash']}.wav");
+                unlink(__DIR__."/../uploads/mp3/{$file['hash']}.mp3");
+                unlink(__DIR__."/../uploads/wav/{$file['hash']}.wav");
             }
             $fileList = $this->selectFile();
         }
