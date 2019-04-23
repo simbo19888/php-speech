@@ -7,7 +7,7 @@ Speech-to-Text PHP-Google
 
 ### Ключ
 Программа использует сервисный аккаунт google.
-Необходимо указать путь к json файлу в переменных среды(GOOGLE_APPLICATION_CREDENTIALS=path/to/file.json), или подключать в php (в файле controllers/GoogleController.php расскоментировать и изменить путь в 97 строке).
+Необходимо указать путь к json файлу в переменных среды(GOOGLE_APPLICATION_CREDENTIALS=path/to/file.json), или подключать в php (в файле controllers/GoogleController.php расскоментировать и изменить путь в 100 строке).
 Необходимо указать bucket name от google cloud storage (controllers/GoogleController.php 49)
 
 ### Библиотеки 
