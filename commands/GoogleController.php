@@ -73,19 +73,27 @@ class GoogleController extends Controller
         $config->setModel('default');
         # Instantiates a client
         $client = new SpeechClient();
+
         $res = "";
-        try {
-            $response = $client->recognize($config, $audio);
+        $status = "success";
+        $operation = $client->longRunningRecognize($config, $audio);
+        $operation->pollUntilComplete();
+        if ($operation->operationSucceeded()) {
+            $response = $operation->getResult();
+            // each result is for a consecutive portion of the audio. iterate
+            // through them to get the transcripts for the entire audio file.
             foreach ($response->getResults() as $result) {
                 $alternatives = $result->getAlternatives();
                 $mostLikely = $alternatives[0];
                 $transcript = $mostLikely->getTranscript();
-                $res .= strval($transcript);;
+                $res .= $transcript;
             }
-        } finally {
-            $this->updateHash($fileId, strval($res), "succes");
-            $client->close();
+        } else {
+            $status = "error";
+            $res = $operation->getError();
         }
+        $this->updateHash($fileId, strval($res), $status);
+        $client->close();
     }
     public function actionIndex()
     {
