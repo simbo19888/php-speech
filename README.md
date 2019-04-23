@@ -7,7 +7,8 @@ Speech-to-Text PHP-Google
 
 ### Ключ
 Программа использует сервисный аккаунт google.
-Необходимо указать путь к json файлу в переменных среды(GOOGLE_APPLICATION_CREDENTIALS=path/to/file.json), или подключать в php (в файле controllers/GoogleController.php расскоментировать и изменить путь в 77 строке).
+Необходимо указать путь к json файлу в переменных среды(GOOGLE_APPLICATION_CREDENTIALS=path/to/file.json), или подключать в php (в файле controllers/GoogleController.php расскоментировать и изменить путь в 97 строке).
+Необходимо указать bucket name от google cloud storage (controllers/GoogleController.php 49)
 
 ### Подключение БД
 Необходимо настроить подключение к базе данный в файле config/db.php.
@@ -49,8 +50,7 @@ Speech-to-Text PHP-Google
           OWNER TO postgres;
 
 ### Программы
-Для конвертации mp3 в wav программа использует sox с двумя dll (Необходимо поместить в папку с sox)(https://yadi.sk/d/hzrCNfzbO-fhcw)
-Также необходимо указать путь к sox в файле commands/GoogleController.php(85) строка.
+Для конвертации mp3 в wav программа использует sox с поддержкой mp3 (sudo apt-get install libsox-fmt-mp3)
 
 ## Запуск
 Для начала работы надо отправить POST запрос на host/speech в котором атрибутом file будет являться mp3 файл для обработки.

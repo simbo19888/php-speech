@@ -8,12 +8,11 @@
 
 namespace app\commands;
 
-use Google\Cloud\Core\Exception\FailedPreconditionException;
-use google\Cloud\Speech\V1;
+
 use Google\Cloud\Speech\V1\SpeechClient;
 use Google\Cloud\Speech\V1\RecognitionAudio;
 use Google\Cloud\Speech\V1\RecognitionConfig;
-use Google\Cloud\Speech\V1\RecognitionConfig\AudioEncoding;
+use Google\Cloud\Storage\StorageClient;
 use Yii;
 use yii\db\Exception;
 use yii\console\Controller;
@@ -39,18 +38,34 @@ class GoogleController extends Controller
                     ['id'=>$id])
                 ->execute();
         } catch (Exception $e) {
-            return $e;
+            $file = fopen(__DIR__ . "/errors.txt","a");
+            $message = "{$id}:::{$status}:::{$result}:::{$e}";
+            fwrite($file,$message);
+            fclose($file);
         }
     }
-
-    public function getTranscript($fileName ,$fileId){
+    public function uploadStorage($fileName ,$fileId){
         $this->updateHash($fileId, "", "processing");
-        $audioFile = __DIR__."/../uploads/wav/" . $fileName;
-        # get contents of a file into a string
-        $content = file_get_contents($audioFile);
-        # set string as audio content
+        $bucketName = "staging.zippy-acronym-237307.appspot.com";
+        $source = __DIR__ . "/../uploads/wav/{$fileName}";
+        $storage = new StorageClient();
+        $file = fopen($source, 'r');
+        $bucket = $storage->bucket($bucketName);
+        $object = $bucket->upload($file, [
+            'name' => $fileName
+        ]);
+        return "gs://$bucketName/$fileName";
+    }
+    function delete_object($bucketName, $objectName)
+    {
+        $storage = new StorageClient();
+        $bucket = $storage->bucket($bucketName);
+        $object = $bucket->object($objectName);
+        $object->delete();
+    }
+    public function getTranscript($uri ,$fileId){
         $audio = (new RecognitionAudio())
-            ->setContent($content);
+            ->setUri($uri);
         # The audio file's encoding, sample rate and language
         $config = new RecognitionConfig([
             'language_code' => 'ru_RU',
@@ -74,7 +89,7 @@ class GoogleController extends Controller
     }
     public function actionIndex()
     {
-        putenv("GOOGLE_APPLICATION_CREDENTIALS=/var/www/zippy-acronym-237307-15dd4d1ee5f9.json");
+        #putenv("GOOGLE_APPLICATION_CREDENTIALS=/var/www/zippy-acronym-237307-b5ce852938b8.json");
         $pid = getmypid();
         $file = fopen(__DIR__ . "/pid.txt","w");
         fwrite($file, $pid);
@@ -82,9 +97,19 @@ class GoogleController extends Controller
         $fileList = $this->selectFile();
         while($fileList!=[]) {
             foreach ($fileList as $file) {
-                pclose(popen("sox ".__DIR__."/../uploads/mp3/{$file['hash']}.mp3 -V1 ".__DIR__."/../uploads/wav/{$file['hash']}.wav rate 16k channels 1 &", "r"));
-                $this->getTranscript("{$file['hash']}.wav", $file['id']);
-
+                try {
+                    exec("sox " . __DIR__ . "/../uploads/mp3/{$file['hash']}.mp3 -V1 " . __DIR__ . "/../uploads/wav/{$file['hash']}.wav rate 16k channels 1 &");
+                } catch (\Exception $e){
+                    $this->updateHash($file['id'], "Ошибка при работе с sox", "error");
+                    continue;
+                }
+                try{
+                    $uri = $this->uploadStorage("{$file["hash"]}.wav", $file['id']);
+                    $this->getTranscript($uri, $file['id']);
+                    $this->delete_object("staging.zippy-acronym-237307.appspot.com","{$file['hash']}.wav");
+                } catch (\Exception $e){
+                    $this->updateHash($file['id'], "Ошибка при работе с google cloud", "error");
+                }
                 unlink(__DIR__."/../uploads/mp3/{$file['hash']}.mp3");
                 unlink(__DIR__."/../uploads/wav/{$file['hash']}.wav");
             }
