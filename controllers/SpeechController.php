@@ -82,7 +82,10 @@ class SpeechController extends Controller
                     'status' => 'waiting'
                 ])->execute();
         } catch (Exception $e) {
-            return $e;
+            $file = fopen(__DIR__ . "/../commands/errors.txt","a");
+            $message = "insert fail:::{$e}";
+            fwrite($file,$message);
+            fclose($file);
         }
         $return = [
             'id' => intval(Yii::$app->db->lastInsertID),
